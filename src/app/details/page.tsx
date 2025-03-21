@@ -16,15 +16,12 @@ function DetailsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [date, setDate] = useState<string | null>(null);
   const [imageData, setImageData] = useState<ApodData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const dateParam = searchParams?.get("date");
-    setDate(dateParam || "");
-
     if (!dateParam) {
       setError("No date provided.");
       setLoading(false);
@@ -51,7 +48,7 @@ function DetailsPageContent() {
     }
 
     fetchImageDetails();
-  }, [searchParams]);
+  }, [searchParams]); // ✅ No unused 'date' variable
 
   if (loading) return <p className="text-white text-center">Loading...</p>;
   if (error) return <p className="text-red-500 text-center">{error}</p>;
