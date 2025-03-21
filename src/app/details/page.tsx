@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
 interface ApodData {
@@ -14,23 +14,28 @@ interface ApodData {
 
 export default function DetailsPage() {
   const searchParams = useSearchParams();
-  const date = searchParams?.get("date") || "Unknown Date"; // ✅ Safe check
+  const router = useRouter();
+  const date = searchParams?.get("date") || "Unknown Date";
   const [imageData, setImageData] = useState<ApodData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null); // ✅ Corrected type
 
   useEffect(() => {
     async function fetchImageDetails() {
       if (!date || date === "Unknown Date") return;
       try {
+        const apiKey = process.env.NEXT_PUBLIC_NASA_API_KEY;
+        if (!apiKey) throw new Error("NASA API key is missing.");
+
         const res = await fetch(
-          `https://api.nasa.gov/planetary/apod?api_key=${process.env.NEXT_PUBLIC_NASA_API_KEY}&date=${date}`
+          `https://api.nasa.gov/planetary/apod?api_key=${apiKey}&date=${date}`
         );
         if (!res.ok) throw new Error("Failed to fetch data.");
+
         const data = await res.json();
         setImageData(data);
-      } catch (error) {
-        setError("Failed to load image details.");
+      } catch (err: any) {
+        setError(err.message || "Failed to load image details."); // ✅ Now using `error`
       } finally {
         setLoading(false);
       }
@@ -40,11 +45,19 @@ export default function DetailsPage() {
   }, [date]);
 
   if (loading) return <p className="text-white text-center">Loading...</p>;
-  if (error) return <p className="text-red-500 text-center">{error}</p>;
+  if (error) return <p className="text-red-500 text-center">{error}</p>; // ✅ Now `error` is used
+
   if (!imageData) return <p className="text-white text-center">No data found.</p>;
 
   return (
     <div className="p-6 text-white max-w-3xl mx-auto">
+      <button
+        onClick={() => router.back()}
+        className="bg-gray-700 text-white px-4 py-2 rounded mb-4 hover:bg-gray-600"
+      >
+        ← Back
+      </button>
+
       <h1 className="text-2xl font-bold mb-4">{imageData.title}</h1>
       <p className="text-gray-400 text-sm mb-4">Date: {imageData.date}</p>
 
